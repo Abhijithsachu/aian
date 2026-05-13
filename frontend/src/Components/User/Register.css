@@ -1,0 +1,384 @@
+/* Register.css */
+
+/* MAIN BACKGROUND */
+.register-container {
+  min-height: 100vh;
+  padding: 20px;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  background:
+    linear-gradient(
+      120deg,
+      rgba(0, 0, 0, 0.75),
+      rgba(42, 25, 5, 0.55),
+      rgba(0, 0, 0, 0.82)
+    ),
+    url("../../assets/register-bg.png") no-repeat center center;
+
+  background-size: cover;
+  position: relative;
+  overflow: hidden;
+}
+
+/* DARK GOLD OVERLAY */
+.register-container::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at top left, rgba(255, 215, 0, 0.18), transparent 35%),
+    radial-gradient(circle at bottom right, rgba(184, 134, 11, 0.18), transparent 35%),
+    rgba(0, 0, 0, 0.25);
+  z-index: 1;
+}
+
+/* GLASS CARD */
+.glass-card {
+  position: relative;
+  z-index: 2;
+
+  width: 430px;
+  padding: 36px 38px;
+  border-radius: 28px;
+
+  background: rgba(15, 15, 15, 0.52);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+
+  border: 1px solid rgba(255, 215, 0, 0.35);
+
+  box-shadow:
+    0 25px 70px rgba(0, 0, 0, 0.55),
+    inset 0 0 25px rgba(255, 255, 255, 0.05),
+    0 0 30px rgba(255, 215, 0, 0.08);
+
+  text-align: center;
+  color: #ffffff;
+
+  animation: registerPop 0.8s ease;
+  overflow: hidden;
+}
+
+/* GLOW BORDER */
+.glass-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 28px;
+  padding: 1px;
+
+  background: linear-gradient(
+    135deg,
+    rgba(255, 215, 0, 0.7),
+    rgba(255, 255, 255, 0.15),
+    rgba(184, 134, 11, 0.65)
+  );
+
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+
+  pointer-events: none;
+}
+
+/* TOP SHINE */
+.glass-card::after {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -40%;
+
+  width: 80%;
+  height: 200%;
+
+  /* background: linear-gradient(
+    120deg,
+    transparent,
+    rgba(255, 255, 255, 0.13),
+    transparent
+  ); */
+
+  transform: rotate(20deg);
+  pointer-events: none;
+}
+
+/* ANIMATION */
+@keyframes registerPop {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.96);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* TITLE */
+.title {
+  margin-bottom: 24px;
+  font-size: 34px;
+  font-weight: 900;
+  color: #ffd700;
+  letter-spacing: 1.2px;
+  text-shadow: 0 4px 18px rgba(0, 0, 0, 0.65);
+}
+
+.title::after {
+  content: "";
+  display: block;
+  width: 70px;
+  height: 3px;
+  margin: 12px auto 0;
+  border-radius: 20px;
+  background: linear-gradient(90deg, transparent, #ffd700, transparent);
+}
+
+/* INPUT BOX */
+.input-box {
+  position: relative;
+  margin: 22px 0;
+}
+
+.input-box input {
+  width: 100%;
+  padding: 14px 14px 12px;
+
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  outline: none;
+
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+
+  font-size: 15px;
+  border-radius: 14px;
+
+  transition: 0.3s ease;
+}
+
+.input-box input:focus {
+  border-color: #ffd700;
+  background: rgba(255, 255, 255, 0.13);
+  box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.12);
+}
+
+/* LABEL */
+.input-box label {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 14px;
+
+  pointer-events: none;
+  transition: 0.25s ease;
+}
+
+/* FLOAT LABEL */
+.input-box input:focus ~ label,
+.input-box input:valid ~ label {
+  top: -9px;
+  left: 12px;
+
+  padding: 0 7px;
+  font-size: 11px;
+  font-weight: 700;
+
+  color: #ffd700;
+  background: rgba(15, 15, 15, 0.95);
+  border-radius: 20px;
+}
+
+/* ERROR MESSAGES */
+.error {
+  display: block;
+  text-align: left;
+
+  margin: 6px 0 0 5px;
+
+  color: #ffb3b3;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* REGISTER BUTTON */
+.register-btn {
+  width: 100%;
+  padding: 14px;
+  margin-top: 10px;
+
+  border: none;
+  border-radius: 14px;
+
+  background: linear-gradient(135deg, #ffd700, #b8860b);
+  color: #111;
+
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: 0.8px;
+
+  cursor: pointer;
+  transition: 0.3s ease;
+
+  box-shadow: 0 12px 30px rgba(255, 215, 0, 0.25);
+}
+
+.register-btn:hover {
+  transform: translateY(-3px);
+  background: linear-gradient(135deg, #fff1a8, #d4a017);
+  box-shadow: 0 18px 38px rgba(255, 215, 0, 0.38);
+}
+
+/* EXTRA TEXT */
+.extra {
+  margin-top: 18px;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.extra span,
+.extra a {
+  color: #ffd700;
+  font-weight: 800;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.extra span:hover,
+.extra a:hover {
+  text-decoration: underline;
+}
+
+/* AUTOFILL FIX */
+.input-box input:-webkit-autofill,
+.input-box input:-webkit-autofill:hover,
+.input-box input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #ffffff;
+  transition: background-color 9999s ease-in-out 0s;
+}
+
+/* MOBILE */
+@media (max-width: 480px) {
+  .glass-card {
+    width: 100%;
+    max-width: 350px;
+    padding: 32px 24px;
+    border-radius: 24px;
+  }
+
+  .title {
+    font-size: 29px;
+  }
+
+  .input-box {
+    margin: 20px 0;
+  }
+}
+.link-btn {
+  border: none;
+  background: transparent;
+  color: #fff;
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+/* MESSAGE BOX */
+.message-box {
+  margin: 0 0 18px;
+  padding: 12px 14px;
+  border-radius: 14px;
+
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+
+  animation: messageSlide 0.35s ease;
+}
+
+.message-box.success {
+  color: #d9ffd9;
+  background: rgba(0, 180, 80, 0.18);
+  border: 1px solid rgba(0, 255, 120, 0.35);
+  box-shadow: 0 0 18px rgba(0, 255, 120, 0.08);
+}
+
+.message-box.error {
+  color: #ffd6d6;
+  background: rgba(255, 40, 40, 0.16);
+  border: 1px solid rgba(255, 80, 80, 0.35);
+  box-shadow: 0 0 18px rgba(255, 40, 40, 0.08);
+}
+
+@keyframes messageSlide {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* PASSWORD EYE ICON */
+.password-box input {
+  padding-right: 45px;
+}
+
+.eye-icon {
+  position: absolute;
+  right: 14px;
+  top: 15px;
+
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 17px;
+  cursor: pointer;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  transition: 0.3s ease;
+}
+
+.eye-icon:hover {
+  color: #ffd700;
+}
+
+/* INPUT ERROR BORDER */
+.input-box input.input-error {
+  border-color: #ff6b6b;
+  background: rgba(255, 80, 80, 0.08);
+}
+
+.input-box input.input-error:focus {
+  border-color: #ff6b6b;
+  box-shadow: 0 0 0 3px rgba(255, 80, 80, 0.15);
+}
+
+.input-box input.input-error ~ label {
+  color: #ffb3b3;
+}
+
+/* DISABLED BUTTON */
+.register-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.register-btn:disabled:hover {
+  transform: none;
+  background: linear-gradient(135deg, #ffd700, #b8860b);
+  box-shadow: 0 12px 30px rgba(255, 215, 0, 0.25);
+}
