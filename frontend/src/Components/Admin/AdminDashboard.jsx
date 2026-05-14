@@ -28,7 +28,7 @@ function AdminDashboard() {
 
   const navigate = useNavigate();
 
-  const BASE_URL = "http://localhost:8000";
+  const BASE_URL = "https://aian-backend.onrender.com";
 
   const showToast = useCallback((message, type = "success") => {
     setToast({

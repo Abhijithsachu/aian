@@ -11,10 +11,10 @@ function Cart() {
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // const BASE_URL = "https://aianjewels-backend.onrender.com";
+  const BASE_URL = "https://aian-backend.onrender.com";
 
   // For local testing, use this:
-  const BASE_URL = "http://localhost:8000";
+  // const BASE_URL = "http://localhost:8000";
 
   const getImageUrl = (imagePath) => {
     if (!imagePath) return "https://via.placeholder.com/200";

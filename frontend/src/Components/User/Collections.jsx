@@ -14,10 +14,10 @@ function Collections() {
 
   const navigate = useNavigate();
 
-  const BASE_URL = "http://localhost:8000";
+  // const BASE_URL = "http://localhost:8000";
 
   // For deployment:
-  // const BASE_URL = "https://aianjewels-backend.onrender.com";
+  const BASE_URL = "https://aian-backend.onrender.com";
 
   const categories = [
     "All",

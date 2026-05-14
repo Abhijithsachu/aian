@@ -22,6 +22,7 @@ app.use(
   cors({
     origin: [
       "http://localhost:5173",
+      "https://aian-sigma.vercel.app",
       process.env.CLIENT_URL,
     ],
     credentials: true,
