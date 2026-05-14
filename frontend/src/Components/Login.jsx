@@ -61,7 +61,7 @@ function Login() {
       setLoading(true);
       setServerError("");
 
-      const response = await api.post("/users/login", {
+      const response = await api.post("/users/login ", {
         email: formData.email,
         password: formData.password,
       });

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import "./AdminDashboard.css";
 import { useNavigate } from "react-router-dom";
 import api from "../api.js";
@@ -22,119 +22,172 @@ function AdminDashboard() {
     description: "",
     price: "",
     category: "",
+    shippingCharge: "",
     image: null,
   });
 
   const navigate = useNavigate();
 
-  const showToast = (message, type = "success") => {
-    setToast({ message, type, visible: true });
+  const BASE_URL = "http://localhost:8000";
+
+  const showToast = useCallback((message, type = "success") => {
+    setToast({
+      message,
+      type,
+      visible: true,
+    });
 
     setTimeout(() => {
-      setToast({ message: "", type: "", visible: false });
+      setToast({
+        message: "",
+        type: "",
+        visible: false,
+      });
     }, 3000);
+  }, []);
+
+  const getArrayFromResponse = (data, keyName) => {
+    if (Array.isArray(data)) return data;
+    if (Array.isArray(data?.[keyName])) return data[keyName];
+    if (Array.isArray(data?.data)) return data.data;
+    return [];
   };
 
-// ---------------- PRODUCTS ----------------
-const fetchProducts = async () => {
-  try {
-    const res = await api.get("/products");
-    setProducts(res.data || []);
-  } catch (err) {
-    console.log(err.message);
-    showToast("Failed to fetch products", "error");
-  }
-};
-
-// ---------------- LOAD DASHBOARD DATA ----------------
-useEffect(() => {
-  const loadDashboardData = async () => {
+  // ---------------- PRODUCTS ----------------
+  const fetchProducts = useCallback(async () => {
     try {
-      const [usersRes, productsRes] = await Promise.all([
-        api.get("/users"),
-        api.get("/products"),
-      ]);
-
-      setUsers(usersRes.data || []);
-      setProducts(productsRes.data || []);
+      const res = await api.get("/products");
+      setProducts(getArrayFromResponse(res.data, "products"));
     } catch (err) {
-      console.log(err.message);
-      showToast("Failed to load dashboard data", "error");
+      console.log("FETCH PRODUCTS ERROR:", err.response?.data || err.message);
+      showToast("Failed to fetch products", "error");
     }
-  };
+  }, [showToast]);
 
-  loadDashboardData();
-}, []);
+ 
+
+  // ---------------- LOAD DASHBOARD DATA ----------------
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadDashboardData = async () => {
+      try {
+        const [usersRes, productsRes] = await Promise.all([
+          api.get("/users"),
+          api.get("/products"),
+        ]);
+
+        if (!isMounted) return;
+
+        setUsers(getArrayFromResponse(usersRes.data, "users"));
+        setProducts(getArrayFromResponse(productsRes.data, "products"));
+      } catch (err) {
+        console.log("LOAD DASHBOARD ERROR:", err.response?.data || err.message);
+
+        if (isMounted) {
+          showToast("Failed to load dashboard data", "error");
+        }
+      }
+    };
+
+    loadDashboardData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [showToast]);
 
   // ---------------- LOGOUT ----------------
   const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
     localStorage.removeItem("adminToken");
-    navigate("/");
+    navigate("/Login");
   };
 
   // ---------------- FORM ----------------
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+
+    setForm((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
   const handleImage = (e) => {
-    setForm({ ...form, image: e.target.files[0] });
+    const file = e.target.files[0];
+
+    setForm((prev) => ({
+      ...prev,
+      image: file,
+    }));
   };
 
   // ---------------- IMAGE FIX ----------------
   const getProductImage = (product) => {
-    if (product.images && Array.isArray(product.images) && product.images.length > 0) {
-      return `https://aianjewels-backend.onrender.com/${product.images[0]}`;
+    const imagePath = Array.isArray(product.images)
+      ? product.images[0]
+      : product.images || product.image;
+
+    if (!imagePath) {
+      return "https://via.placeholder.com/300x250?text=No+Image";
     }
 
-    if (product.images && typeof product.images === "string") {
-      return `https://aianjewels-backend.onrender.com/${product.images}`;
+    if (imagePath.startsWith("http")) {
+      return imagePath;
     }
 
-    if (product.image) {
-      return `https://aianjewels-backend.onrender.com/${product.image}`;
-    }
-
-    return "https://via.placeholder.com/300x250?text=No+Image";
+    return `${BASE_URL}/${imagePath.replace(/^\/+/, "")}`;
   };
 
   // ---------------- ADD ----------------
   const openAddModal = () => {
     setEditingProduct(null);
+
     setForm({
       name: "",
       description: "",
       price: "",
       category: "",
+      shippingCharge: "",
       image: null,
     });
+
     setShowModal(true);
   };
 
   // ---------------- EDIT ----------------
   const openEditModal = (product) => {
     setEditingProduct(product);
+
     setForm({
       name: product.name || "",
       description: product.description || "",
       price: product.price || "",
       category: product.category || "",
+      shippingCharge:
+        product.shippingCharge !== undefined ? product.shippingCharge : "",
       image: null,
     });
+
     setShowModal(true);
   };
 
   // ---------------- DELETE ----------------
   const handleDelete = async (id) => {
     const confirmDelete = window.confirm("Delete this product?");
+
     if (!confirmDelete) return;
 
     try {
       await api.delete(`/products/${id}`);
-      fetchProducts();
+
+      await fetchProducts();
+
       showToast("Product deleted successfully", "success");
     } catch (err) {
-      console.log(err.message);
+      console.log("DELETE ERROR:", err.response?.data || err.message);
       showToast("Delete failed", "error");
     }
   };
@@ -145,10 +198,12 @@ useEffect(() => {
 
     try {
       const data = new FormData();
+
       data.append("name", form.name);
       data.append("description", form.description);
       data.append("price", form.price);
       data.append("category", form.category);
+      data.append("shippingCharge", form.shippingCharge || 0);
 
       if (form.image) {
         data.append("image", form.image);
@@ -156,13 +211,17 @@ useEffect(() => {
 
       if (editingProduct) {
         await api.put(`/products/${editingProduct._id}`, data, {
-          headers: { "Content-Type": "multipart/form-data" },
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
         });
 
         showToast("Product updated successfully", "success");
       } else {
         await api.post("/products/create", data, {
-          headers: { "Content-Type": "multipart/form-data" },
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
         });
 
         showToast("Product added successfully", "success");
@@ -176,13 +235,14 @@ useEffect(() => {
         description: "",
         price: "",
         category: "",
+        shippingCharge: "",
         image: null,
       });
 
-      fetchProducts();
+      await fetchProducts();
     } catch (err) {
-      console.log(err.message);
-      showToast("Something went wrong", "error");
+      console.log("SUBMIT ERROR:", err.response?.data || err.message);
+      showToast(err.response?.data?.message || "Something went wrong", "error");
     }
   };
 
@@ -191,7 +251,7 @@ useEffect(() => {
       {/* SIDEBAR */}
       <aside className="sidebar">
         <div>
-          <h2 className="admin-logo">AiAn Jewels </h2>
+          <h2 className="admin-logo">AiAn Jewels</h2>
 
           <ul className="sidebar-menu">
             <li
@@ -262,12 +322,25 @@ useEffect(() => {
 
                     <div className="product-info">
                       <h3>{product.name}</h3>
+
                       <p className="product-category">{product.category}</p>
+
                       <p className="product-desc">{product.description}</p>
 
                       <div className="price-row">
-                        <span>₹{product.price}</span>
+                        <span>
+                          ₹{Number(product.price || 0).toLocaleString()}
+                        </span>
                       </div>
+
+                      <p className="shipping-text">
+                        Shipping:{" "}
+                        {Number(product.shippingCharge || 0) > 0
+                          ? `₹${Number(
+                              product.shippingCharge
+                            ).toLocaleString()}`
+                          : "Free Shipping"}
+                      </p>
 
                       <div className="card-actions">
                         <button
@@ -351,7 +424,17 @@ useEffect(() => {
                 placeholder="Price"
                 value={form.price}
                 onChange={handleChange}
+                min="0"
                 required
+              />
+
+              <input
+                name="shippingCharge"
+                type="number"
+                placeholder="Shipping Charge, 0 for free shipping"
+                value={form.shippingCharge}
+                onChange={handleChange}
+                min="0"
               />
 
               <select
@@ -391,9 +474,7 @@ useEffect(() => {
 
       {/* TOAST */}
       {toast.visible && (
-        <div className={`toast ${toast.type}`}>
-          {toast.message}
-        </div>
+        <div className={`toast ${toast.type}`}>{toast.message}</div>
       )}
     </div>
   );

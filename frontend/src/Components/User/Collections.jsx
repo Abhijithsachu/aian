@@ -14,7 +14,10 @@ function Collections() {
 
   const navigate = useNavigate();
 
-  const BASE_URL = "https://aianjewels-backend.onrender.com";
+  const BASE_URL = "http://localhost:8000";
+
+  // For deployment:
+  // const BASE_URL = "https://aianjewels-backend.onrender.com";
 
   const categories = [
     "All",
@@ -143,49 +146,49 @@ function Collections() {
   };
 
   // ---------------- ADD TO CART ----------------
- const addToCart = async (product) => {
-  try {
-    const token = localStorage.getItem("token");
+  const addToCart = async (product) => {
+    try {
+      const token = localStorage.getItem("token");
 
-    if (!token) {
-      toast.error("Please login first");
-      navigate("/Collections");
+      if (!token) {
+        toast.error("Please login first");
+        navigate("/Collections");
+        return false;
+      }
+
+      const res = await api.post(
+        "/cart/add",
+        {
+          productId: product._id,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const cartItems = getCartItemsFromResponse(res.data);
+
+      if (cartItems.length > 0) {
+        setCart(cartItems);
+      } else {
+        await refreshCart();
+      }
+
+      if (res.data?.alreadyExists) {
+        toast.info("Product already in cart");
+      } else {
+        toast.success("Added to cart 🛒");
+      }
+
+      return true;
+    } catch (err) {
+      console.log("ADD TO CART ERROR:", err.response?.data || err.message);
+      toast.error(err.response?.data?.message || "Failed to add to cart");
       return false;
     }
-
-    const res = await api.post(
-      "/cart/add",
-      {
-        productId: product._id,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-
-    const cartItems = getCartItemsFromResponse(res.data);
-
-    if (cartItems.length > 0) {
-      setCart(cartItems);
-    } else {
-      await refreshCart();
-    }
-
-    if (res.data?.alreadyExists) {
-      toast.info("Product already in cart");
-    } else {
-      toast.success("Added to cart 🛒");
-    }
-
-    return true;
-  } catch (err) {
-    console.log("ADD TO CART ERROR:", err.response?.data || err.message);
-    toast.error(err.response?.data?.message || "Failed to add to cart");
-    return false;
-  }
-};
+  };
 
   // ---------------- BUY NOW - WHATSAPP DIRECT ----------------
   const buyNow = (product) => {
@@ -206,8 +209,9 @@ function Collections() {
     const productName = product.name || "Product";
     const productCategory = product.category || "Not Provided";
     const productPrice = Number(product.price || 0);
+    const productShipping = Number(product.shippingCharge || 0);
     const productQty = 1;
-    const productTotal = productPrice * productQty;
+    const productTotal = productPrice * productQty + productShipping;
 
     const message = `
 🛒 *New Order - AiAn Jewels*
@@ -222,6 +226,11 @@ Product: ${productName}
 Category: ${productCategory}
 Qty: ${productQty}
 Price: ₹${productPrice.toLocaleString()}
+Shipping: ${
+      productShipping > 0
+        ? `₹${productShipping.toLocaleString()}`
+        : "Free Shipping"
+    }
 Total: ₹${productTotal.toLocaleString()}
 
 📍 Please confirm my order.
@@ -364,6 +373,21 @@ Total: ₹${productTotal.toLocaleString()}
               </p>
 
               <h3>₹{Number(selectedProduct.price || 0).toLocaleString()}</h3>
+
+              <p className="modal-shipping">
+                Shipping:{" "}
+                {Number(selectedProduct.shippingCharge || 0) > 0
+                  ? `₹${Number(selectedProduct.shippingCharge).toLocaleString()}`
+                  : "Free Shipping"}
+              </p>
+
+              <p className="modal-total">
+                Total: ₹
+                {(
+                  Number(selectedProduct.price || 0) +
+                  Number(selectedProduct.shippingCharge || 0)
+                ).toLocaleString()}
+              </p>
 
               <button
                 className="add-button"

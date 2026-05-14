@@ -11,6 +11,11 @@ function Cart() {
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // const BASE_URL = "https://aianjewels-backend.onrender.com";
+
+  // For local testing, use this:
+  const BASE_URL = "http://localhost:8000";
+
   const getImageUrl = (imagePath) => {
     if (!imagePath) return "https://via.placeholder.com/200";
 
@@ -18,39 +23,38 @@ function Cart() {
       return imagePath;
     }
 
-    return `https://aianjewels-backend.onrender.com/${imagePath.replace(/^\/+/, "")}`;
+    return `${BASE_URL}/${imagePath.replace(/^\/+/, "")}`;
   };
 
   const getCartItemsFromResponse = (data) => {
     return data?.items || data?.cart?.items || data?.data?.items || [];
   };
 
- const formatCartItems = (items) => {
-  const mergedItems = {};
+  const formatCartItems = (items) => {
+    const mergedItems = {};
 
-  items
-    .filter((item) => item.productId)
-    .forEach((item) => {
-      const product = item.productId;
-      const productId = String(product._id);
+    items
+      .filter((item) => item.productId)
+      .forEach((item) => {
+        const product = item.productId;
+        const productId = String(product._id);
 
-      if (mergedItems[productId]) {
-        // ✅ Same product already exists, quantity add cheyyum
-        mergedItems[productId].quantity += Number(item.quantity || 1);
-      } else {
-        // ✅ First time product
-        mergedItems[productId] = {
-          id: productId,
-          name: product.name,
-          price: Number(product.price) || 0,
-          image: getImageUrl(product.images?.[0] || product.image),
-          quantity: Number(item.quantity || 1),
-        };
-      }
-    });
+        if (mergedItems[productId]) {
+          mergedItems[productId].quantity += Number(item.quantity || 1);
+        } else {
+          mergedItems[productId] = {
+            id: productId,
+            name: product.name,
+            price: Number(product.price) || 0,
+            shippingCharge: Number(product.shippingCharge || 0),
+            image: getImageUrl(product.images?.[0] || product.image),
+            quantity: Number(item.quantity || 1),
+          };
+        }
+      });
 
-  return Object.values(mergedItems);
-};
+    return Object.values(mergedItems);
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -70,8 +74,6 @@ function Cart() {
             Authorization: `Bearer ${token}`,
           },
         });
-
-        // console.log("CART RESPONSE:", res.data);
 
         const items = getCartItemsFromResponse(res.data);
         const formatted = formatCartItems(items);
@@ -124,6 +126,18 @@ function Cart() {
     }
   };
 
+  const subtotal = cartItems.reduce(
+    (acc, item) => acc + item.price * item.quantity,
+    0
+  );
+
+  const shipping = cartItems.reduce(
+    (acc, item) => acc + Number(item.shippingCharge || 0),
+    0
+  );
+
+  const total = subtotal + shipping;
+
   const handleCheckout = () => {
     if (cartItems.length === 0) {
       toast.error("Cart is empty");
@@ -131,18 +145,23 @@ function Cart() {
     }
 
     const productList = cartItems
-      .map(
-        (item, index) =>
-          `${index + 1}. ${item.name}\nQty: ${item.quantity}\nPrice: ₹${
-            item.price
-          }\nTotal: ₹${item.price * item.quantity}`
-      )
-      .join("\n\n");
+      .map((item, index) => {
+        const itemSubtotal = item.price * item.quantity;
+        const itemShipping = Number(item.shippingCharge || 0);
+        const itemTotal = itemSubtotal + itemShipping;
 
-    const totalAmount = cartItems.reduce(
-      (acc, item) => acc + item.price * item.quantity,
-      0
-    );
+        return `${index + 1}. ${item.name}
+Qty: ${item.quantity}
+Price: ₹${item.price.toLocaleString()}
+Product Total: ₹${itemSubtotal.toLocaleString()}
+Shipping: ${
+          itemShipping > 0
+            ? `₹${itemShipping.toLocaleString()}`
+            : "Free Shipping"
+        }
+Total: ₹${itemTotal.toLocaleString()}`;
+      })
+      .join("\n\n");
 
     const user = JSON.parse(localStorage.getItem("user"));
 
@@ -153,14 +172,18 @@ function Cart() {
     const message = `
 🛒 *New Order - AiAn Jewels*
 
-👤 Name: ${userName}
-📞 Phone: ${userPhone}
-🏠 Address: ${userAddress}
+👤 *Customer Details*
+Name: ${userName}
+Phone: ${userPhone}
+Address: ${userAddress}
 
-📦 Order Details:
+📦 *Order Details*
 ${productList}
 
-💰 Total: ₹${totalAmount}
+💰 *Payment Summary*
+Subtotal: ₹${subtotal.toLocaleString()}
+Shipping: ${shipping > 0 ? `₹${shipping.toLocaleString()}` : "Free Shipping"}
+Total: ₹${total.toLocaleString()}
 
 📍 Please confirm my order.
 `;
@@ -184,14 +207,6 @@ ${productList}
     );
   }
 
-  const subtotal = cartItems.reduce(
-    (acc, item) => acc + item.price * item.quantity,
-    0
-  );
-
-  const shipping = subtotal > 500 || subtotal === 0 ? 0 : 25;
-  const total = subtotal + shipping;
-
   return (
     <div className="cart-page">
       <div className="cart-container">
@@ -204,37 +219,54 @@ ${productList}
         {cartItems.length > 0 ? (
           <div className="cart-content">
             <div className="items-section">
-              {cartItems.map((item) => (
-                <div key={item.id} className="item-card">
-                  <img src={item.image} alt={item.name} className="item-img" />
+              {cartItems.map((item) => {
+                const itemSubtotal = item.price * item.quantity;
+                const itemShipping = Number(item.shippingCharge || 0);
+                const itemTotal = itemSubtotal + itemShipping;
 
-                  <div className="item-info">
-                    <h3 className="item-title">{item.name}</h3>
+                return (
+                  <div key={item.id} className="item-card">
+                    <img
+                      src={item.image}
+                      alt={item.name}
+                      className="item-img"
+                    />
 
-                    <p className="item-sku">
-                      SKU: JW-00{String(item.id).slice(-4)}
-                    </p>
+                    <div className="item-info">
+                      <h3 className="item-title">{item.name}</h3>
 
-                    <p className="item-unit-price">
-                      ₹{item.price.toLocaleString()}
-                    </p>
+                      <p className="item-sku">
+                        SKU: JW-00{String(item.id).slice(-4)}
+                      </p>
+
+                      <p className="item-unit-price">
+                        ₹{item.price.toLocaleString()}
+                      </p>
+
+                      <p className="item-shipping">
+                        Shipping:{" "}
+                        {itemShipping > 0
+                          ? `₹${itemShipping.toLocaleString()}`
+                          : "Free Shipping"}
+                      </p>
+                    </div>
+
+                    <div className="qty-display">Qty: {item.quantity}</div>
+
+                    <div className="item-total-price">
+                      ₹{itemTotal.toLocaleString()}
+                    </div>
+
+                    <button
+                      className="delete-btn"
+                      onClick={() => removeItem(item.id)}
+                      title="Remove item"
+                    >
+                      <FaTrashAlt />
+                    </button>
                   </div>
-
-                  <div className="qty-display">Qty: {item.quantity}</div>
-
-                  <div className="item-total-price">
-                    ₹{(item.price * item.quantity).toLocaleString()}
-                  </div>
-
-                  <button
-                    className="delete-btn"
-                    onClick={() => removeItem(item.id)}
-                    title="Remove item"
-                  >
-                    <FaTrashAlt />
-                  </button>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             <div className="summary-section">
@@ -244,6 +276,15 @@ ${productList}
                 <div className="summary-line">
                   <span>Subtotal</span>
                   <span>₹{subtotal.toLocaleString()}</span>
+                </div>
+
+                <div className="summary-line">
+                  <span>Shipping</span>
+                  <span>
+                    {shipping > 0
+                      ? `₹${shipping.toLocaleString()}`
+                      : "Free Shipping"}
+                  </span>
                 </div>
 
                 <div className="summary-total">

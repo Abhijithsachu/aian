@@ -467,9 +467,23 @@
 }
 
 .modal-info h3 {
-  margin: 12px 0 16px;
+  margin: 12px 0 8px;
   font-size: 1.5rem;
   color: #ffd700;
+}
+
+.modal-shipping {
+  margin: 0 0 8px;
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.85);
+  font-weight: 600;
+}
+
+.modal-total {
+  margin: 0 0 14px;
+  font-size: 1.05rem;
+  color: #ffd700;
+  font-weight: bold;
 }
 
 /* =======================
@@ -596,6 +610,14 @@
   .modal-description {
     max-height: 110px;
   }
+
+  .modal-shipping {
+    font-size: 0.86rem;
+  }
+
+  .modal-total {
+    font-size: 0.95rem;
+  }
 }
 
 @media (max-width: 420px) {
@@ -630,5 +652,13 @@
 
   .modal-image-box {
     height: 240px;
+  }
+
+  .modal-shipping {
+    font-size: 0.82rem;
+  }
+
+  .modal-total {
+    font-size: 0.9rem;
   }
 }

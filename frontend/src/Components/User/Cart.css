@@ -124,6 +124,14 @@
   font-family: Arial, sans-serif;
 }
 
+.item-shipping {
+  margin-top: 6px;
+  color: #444;
+  font-size: 0.82rem;
+  font-family: Arial, sans-serif;
+  font-weight: 600;
+}
+
 .qty-display {
   font-family: Arial, sans-serif;
   padding: 7px 13px;
@@ -309,7 +317,7 @@
   .item-img {
     width: 90px;
     height: 90px;
-    grid-row: span 3;
+    grid-row: span 4;
   }
 
   .item-info {
@@ -326,6 +334,10 @@
 
   .item-unit-price {
     font-size: 0.9rem;
+  }
+
+  .item-shipping {
+    font-size: 0.75rem;
   }
 
   .qty-display {
@@ -394,6 +406,14 @@
 
   .item-sku {
     display: none;
+  }
+
+  .item-unit-price {
+    font-size: 0.82rem;
+  }
+
+  .item-shipping {
+    font-size: 0.72rem;
   }
 
   .qty-display {

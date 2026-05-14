@@ -22,13 +22,30 @@ function HomePage() {
   const [error, setError] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
+  // APPLE STYLE INTRO STATE
+  const [showIntro, setShowIntro] = useState(() => {
+  return sessionStorage.getItem("aianIntroShown") !== "true";
+});
+
   const navigate = useNavigate();
 
   const isLoggedIn = !!localStorage.getItem("token");
 
-  const BASE_URL = "https://aianjewels-backend.onrender.com";
+  const BASE_URL = "http://localhost:8000";
 
-  // ---------------- IMAGE URL FIX ----------------
+  // ---------------- INTRO TIMER ----------------
+  useEffect(() => {
+  if (!showIntro) return;
+
+  const timer = setTimeout(() => {
+    sessionStorage.setItem("aianIntroShown", "true");
+    setShowIntro(false);
+  }, 2400);
+
+  return () => clearTimeout(timer);
+}, [showIntro]);
+
+  
   const getImageUrl = (product) => {
     const imagePath = Array.isArray(product.images)
       ? product.images[0]
@@ -45,7 +62,7 @@ function HomePage() {
     return `${BASE_URL}/${imagePath.replace(/^\/+/, "")}`;
   };
 
-  // ---------------- CART RESPONSE FIX ----------------
+
   const getCartItemsFromResponse = (data) => {
     return data?.items || data?.cart?.items || data?.data?.items || [];
   };
@@ -80,52 +97,52 @@ function HomePage() {
     }
   };
 
-  // ---------------- ADD TO CART ----------------
+  
   const addToCart = async (product) => {
-  try {
-    const token = localStorage.getItem("token");
+    try {
+      const token = localStorage.getItem("token");
 
-    if (!token) {
-      toast.error("Please login first");
-      navigate("/");
+      if (!token) {
+        toast.error("Please login first");
+        navigate("/");
+        return false;
+      }
+
+      const res = await api.post(
+        "/cart/add",
+        {
+          productId: product._id,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const cartItems = getCartItemsFromResponse(res.data);
+
+      if (cartItems.length > 0) {
+        setCart(cartItems);
+      } else {
+        await refreshCart();
+      }
+
+      if (res.data?.alreadyExists) {
+        toast.info("Product already in cart");
+      } else {
+        toast.success("Added to cart 🛒");
+      }
+
+      return true;
+    } catch (err) {
+      console.log("ADD TO CART ERROR:", err.response?.data || err.message);
+      toast.error(err.response?.data?.message || "Failed to add to cart");
       return false;
     }
+  };
 
-    const res = await api.post(
-      "/cart/add",
-      {
-        productId: product._id,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-
-    const cartItems = getCartItemsFromResponse(res.data);
-
-    if (cartItems.length > 0) {
-      setCart(cartItems);
-    } else {
-      await refreshCart();
-    }
-
-    if (res.data?.alreadyExists) {
-      toast.info("Product already in cart");
-    } else {
-      toast.success("Added to cart 🛒");
-    }
-
-    return true;
-  } catch (err) {
-    console.log("ADD TO CART ERROR:", err.response?.data || err.message);
-    toast.error(err.response?.data?.message || "Failed to add to cart");
-    return false;
-  }
-};
-
-  // ---------------- BUY NOW - WHATSAPP DIRECT ----------------
+  
   const buyNow = (product) => {
     const token = localStorage.getItem("token");
 
@@ -144,8 +161,9 @@ function HomePage() {
     const productName = product.name || "Product";
     const productCategory = product.category || "Not Provided";
     const productPrice = Number(product.price || 0);
+    const productShipping = Number(product.shippingCharge || 0);
     const productQty = 1;
-    const productTotal = productPrice * productQty;
+    const productTotal = productPrice * productQty + productShipping;
 
     const message = `
 🛒 *New Order - AiAn Jewels*
@@ -160,6 +178,11 @@ Product: ${productName}
 Category: ${productCategory}
 Qty: ${productQty}
 Price: ₹${productPrice.toLocaleString()}
+Shipping: ${
+      productShipping > 0
+        ? `₹${productShipping.toLocaleString()}`
+        : "Free Shipping"
+    }
 Total: ₹${productTotal.toLocaleString()}
 
 📍 Please confirm my order.
@@ -180,7 +203,7 @@ Total: ₹${productTotal.toLocaleString()}
     setSelectedProduct(null);
   };
 
-  // ---------------- FETCH CART ----------------
+  
   useEffect(() => {
     const fetchCart = async () => {
       try {
@@ -197,14 +220,14 @@ Total: ₹${productTotal.toLocaleString()}
         const cartItems = getCartItemsFromResponse(res.data);
         setCart(cartItems);
       } catch (err) {
-        console.error(err);
+        console.error("FETCH CART ERROR:", err.response?.data || err.message);
       }
     };
 
     fetchCart();
   }, []);
 
-  // ---------------- FETCH PRODUCTS ----------------
+ 
   useEffect(() => {
     const fetchLatestProducts = async () => {
       try {
@@ -216,7 +239,7 @@ Total: ₹${productTotal.toLocaleString()}
 
         setProducts(productData);
       } catch (err) {
-        console.error(err);
+        console.error("FETCH PRODUCTS ERROR:", err.response?.data || err.message);
         setError(true);
       } finally {
         setLoading(false);
@@ -226,7 +249,6 @@ Total: ₹${productTotal.toLocaleString()}
     fetchLatestProducts();
   }, []);
 
-  // ---------------- SCROLL ANIMATION ----------------
   useEffect(() => {
     const elements = document.querySelectorAll(".reveal");
 
@@ -248,6 +270,21 @@ Total: ₹${productTotal.toLocaleString()}
 
   return (
     <div className="home">
+      {/* APPLE STYLE INTRO */}
+      {showIntro && (
+        <div className="apple-intro">
+          <div className="apple-intro-content">
+            <div className="intro-logo-ring">
+              <img src={logo} alt="Aian Jewels Logo" className="intro-logo" />
+            </div>
+
+            <h1>AiAn Jewels</h1>
+
+            <p>Shine Forever. Tarnish Never.</p>
+          </div>
+        </div>
+      )}
+
       {/* NAVBAR */}
       <nav className="navbar-wrapper reveal">
         <div className="navbar">
@@ -257,7 +294,6 @@ Total: ₹${productTotal.toLocaleString()}
           </div>
 
           <div className="nav-links">
-            <span onClick={() => goTo("/HomePage")}>Home</span>
             <span onClick={() => goTo("/Collections")}>Collections</span>
             <span onClick={() => goTo("/Contact")}>Contact</span>
           </div>
@@ -294,7 +330,6 @@ Total: ₹${productTotal.toLocaleString()}
           </div>
 
           <div className={`mobile-menu ${menuOpen ? "show" : ""}`}>
-            <span onClick={() => goTo("/HomePage")}>Home</span>
             <span onClick={() => goTo("/Collections")}>Collections</span>
             <span onClick={() => goTo("/Contact")}>Contact</span>
             <span onClick={() => goTo("/Cart")}>Cart ({cart.length})</span>
@@ -310,9 +345,23 @@ Total: ₹${productTotal.toLocaleString()}
 
       {/* HERO */}
       <section className="hero reveal">
-        <h1>Luxury Jewelry Collection</h1>
-        <p>Elegance meets perfection</p>
-        <button onClick={() => goTo("/Collections")}>Shop Now</button>
+        <div className="hero-content">
+          <span className="hero-badge">Anti Tarnish • Handmade • Unique</span>
+
+          <h1>
+            Anti Tarnish Jewels
+            <span>Handcrafted Pieces That Stay Beautiful</span>
+          </h1>
+
+          <p>
+            Discover one of a kind anti tarnish jewellery crafted for real life.
+            Each piece is unique, beautifully made, and designed to stay brilliant
+            through every occasion because you deserve jewellery that lasts as
+            long as the memories.
+          </p>
+
+          <button onClick={() => goTo("/Collections")}>Shop Now</button>
+        </div>
       </section>
 
       {/* CATEGORY SECTION */}
@@ -423,8 +472,9 @@ Total: ₹${productTotal.toLocaleString()}
             <span className="review-tag">Necklace</span>
 
             <p className="review-text">
-              Absolutely beautiful jewelry. The finishing, shine, and packaging felt
-              premium. I wore it for a family function and got so many compliments.
+              Absolutely beautiful jewelry. The finishing, shine, and packaging
+              felt premium. I wore it for a family function and got so many
+              compliments.
             </p>
 
             <div className="reviewer">
@@ -453,8 +503,8 @@ Total: ₹${productTotal.toLocaleString()}
             <span className="review-tag">Ring</span>
 
             <p className="review-text">
-              Loved the design. It looks elegant and premium. The product looked even
-              better than the photos.
+              Loved the design. It looks elegant and premium. The product looked
+              even better than the photos.
             </p>
 
             <div className="reviewer">
@@ -483,8 +533,8 @@ Total: ₹${productTotal.toLocaleString()}
             <span className="review-tag">Earring</span>
 
             <p className="review-text">
-              Great customer service and beautiful collection. Delivery was quick and
-              the earrings were packed safely.
+              Great customer service and beautiful collection. Delivery was
+              quick and the earrings were packed safely.
             </p>
 
             <div className="reviewer">
@@ -513,8 +563,8 @@ Total: ₹${productTotal.toLocaleString()}
             <span className="review-tag">Bracelet</span>
 
             <p className="review-text">
-              Simple, classy, and lightweight. Perfect for daily wear. The quality is
-              really good for the price.
+              Simple, classy, and lightweight. Perfect for daily wear. The
+              quality is really good for the price.
             </p>
 
             <div className="reviewer">
@@ -574,11 +624,15 @@ Total: ₹${productTotal.toLocaleString()}
           <div className="footer-col">
             <h4>Help & Policies</h4>
             <ul>
-              <li onClick={() => goTo("/return-exchange")}>Return & Exchange</li>
+              <li onClick={() => goTo("/return-exchange")}>
+                Return & Exchange
+              </li>
               <li onClick={() => goTo("/ShippingPolicy")}>Shipping Policy</li>
               <li onClick={() => goTo("/PrivacyPolicy")}>Privacy Policy</li>
               <li onClick={() => goTo("/Termsofservice")}>Terms of Service</li>
-              <li onClick={() => goTo("/CareInstructions")}>Care Instructions</li>
+              <li onClick={() => goTo("/CareInstructions")}>
+                Care Instructions
+              </li>
             </ul>
           </div>
 
@@ -629,9 +683,22 @@ Total: ₹${productTotal.toLocaleString()}
                 {selectedProduct.description || "No description available."}
               </p>
 
-              <h3>
-                ₹{Number(selectedProduct.price || 0).toLocaleString()}
-              </h3>
+              <h3>₹{Number(selectedProduct.price || 0).toLocaleString()}</h3>
+
+              <p className="modal-shipping">
+                Shipping:{" "}
+                {Number(selectedProduct.shippingCharge || 0) > 0
+                  ? `₹${Number(selectedProduct.shippingCharge).toLocaleString()}`
+                  : "Free Shipping"}
+              </p>
+
+              <p className="modal-total">
+                Total: ₹
+                {(
+                  Number(selectedProduct.price || 0) +
+                  Number(selectedProduct.shippingCharge || 0)
+                ).toLocaleString()}
+              </p>
 
               <button
                 className="add-button"

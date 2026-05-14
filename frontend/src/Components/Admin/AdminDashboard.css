@@ -215,13 +215,20 @@ body {
 }
 
 .price-row {
-  margin: 12px 0;
+  margin: 12px 0 6px;
 }
 
 .price-row span {
   font-size: 20px;
   font-weight: bold;
   color: #16a34a;
+}
+
+.shipping-text {
+  margin: 0 0 12px;
+  font-size: 14px;
+  color: #374151;
+  font-weight: 600;
 }
 
 /* CARD BUTTONS */
