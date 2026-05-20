@@ -418,7 +418,6 @@ body {
   color: transparent;
 }
 
-/* Stylish Hero Description */
 .hero p {
   position: relative;
   z-index: 2;
@@ -679,6 +678,79 @@ body {
 .home-content button:hover {
   background: gold;
   color: black;
+}
+
+/* =======================
+   PRODUCT SKELETON LOADING
+======================= */
+
+.skeleton-card {
+  pointer-events: none;
+}
+
+.skeleton-card:hover {
+  transform: none;
+}
+
+.skeleton-img {
+  position: relative;
+  background: #eeeeee;
+  overflow: hidden;
+}
+
+.skeleton-line,
+.skeleton-button {
+  position: relative;
+  overflow: hidden;
+  background: #eeeeee;
+  border-radius: 8px;
+}
+
+.skeleton-title {
+  width: 85%;
+  height: 16px;
+  margin: 4px auto 10px;
+}
+
+.skeleton-desc {
+  width: 60%;
+  height: 13px;
+  margin: 0 auto 10px;
+}
+
+.skeleton-price {
+  width: 45%;
+  height: 15px;
+  margin: 0 auto 14px;
+}
+
+.skeleton-button {
+  width: 100%;
+  height: 34px;
+  border-radius: 25px;
+  margin-top: auto;
+}
+
+.skeleton-img::after,
+.skeleton-line::after,
+.skeleton-button::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.75),
+    transparent
+  );
+  animation: skeletonLoading 1.4s infinite;
+}
+
+@keyframes skeletonLoading {
+  100% {
+    transform: translateX(100%);
+  }
 }
 
 /* =======================
@@ -1588,4 +1660,4 @@ body {
   .modal-total {
     font-size: 0.9rem;
   }
-}
+} 

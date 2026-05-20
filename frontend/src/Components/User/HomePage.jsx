@@ -24,8 +24,8 @@ function HomePage() {
 
   // APPLE STYLE INTRO STATE
   const [showIntro, setShowIntro] = useState(() => {
-  return sessionStorage.getItem("aianIntroShown") !== "true";
-});
+    return sessionStorage.getItem("aianIntroShown") !== "true";
+  });
 
   const navigate = useNavigate();
 
@@ -33,21 +33,19 @@ function HomePage() {
 
   // const BASE_URL = "http://localhost:8000";
   const BASE_URL = "https://aian-backend.onrender.com";
- 
 
   // ---------------- INTRO TIMER ----------------
   useEffect(() => {
-  if (!showIntro) return;
+    if (!showIntro) return;
 
-  const timer = setTimeout(() => {
-    sessionStorage.setItem("aianIntroShown", "true");
-    setShowIntro(false);
-  }, 2400);
+    const timer = setTimeout(() => {
+      sessionStorage.setItem("aianIntroShown", "true");
+      setShowIntro(false);
+    }, 2400);
 
-  return () => clearTimeout(timer);
-}, [showIntro]);
+    return () => clearTimeout(timer);
+  }, [showIntro]);
 
-  
   const getImageUrl = (product) => {
     const imagePath = Array.isArray(product.images)
       ? product.images[0]
@@ -63,7 +61,6 @@ function HomePage() {
 
     return `${BASE_URL}/${imagePath.replace(/^\/+/, "")}`;
   };
-
 
   const getCartItemsFromResponse = (data) => {
     return data?.items || data?.cart?.items || data?.data?.items || [];
@@ -99,7 +96,6 @@ function HomePage() {
     }
   };
 
-  
   const addToCart = async (product) => {
     try {
       const token = localStorage.getItem("token");
@@ -144,7 +140,6 @@ function HomePage() {
     }
   };
 
-  
   const buyNow = (product) => {
     const token = localStorage.getItem("token");
 
@@ -205,7 +200,6 @@ Total: ₹${productTotal.toLocaleString()}
     setSelectedProduct(null);
   };
 
-  
   useEffect(() => {
     const fetchCart = async () => {
       try {
@@ -229,10 +223,12 @@ Total: ₹${productTotal.toLocaleString()}
     fetchCart();
   }, []);
 
- 
   useEffect(() => {
     const fetchLatestProducts = async () => {
       try {
+        setLoading(true);
+        setError(false);
+
         const res = await api.get("/products/latest");
 
         const productData = Array.isArray(res.data)
@@ -385,8 +381,26 @@ Total: ₹${productTotal.toLocaleString()}
       <section className="products reveal">
         <h2>New Arrivals</h2>
 
-        {loading && <p>Loading products...</p>}
-        {error && <p className="error-text">Failed to load products</p>}
+        {loading && (
+          <div className="home-grid">
+            {Array.from({ length: 8 }).map((_, index) => (
+              <div className="home-card skeleton-card" key={index}>
+                <div className="img-box skeleton-img"></div>
+
+                <div className="home-content">
+                  <div className="skeleton-line skeleton-title"></div>
+                  <div className="skeleton-line skeleton-desc"></div>
+                  <div className="skeleton-line skeleton-price"></div>
+                  <div className="skeleton-button"></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {!loading && error && (
+          <p className="error-text">Failed to load products</p>
+        )}
 
         {!loading && !error && (
           <div className="home-grid">
@@ -690,7 +704,9 @@ Total: ₹${productTotal.toLocaleString()}
               <p className="modal-shipping">
                 Shipping:{" "}
                 {Number(selectedProduct.shippingCharge || 0) > 0
-                  ? `₹${Number(selectedProduct.shippingCharge).toLocaleString()}`
+                  ? `₹${Number(
+                      selectedProduct.shippingCharge
+                    ).toLocaleString()}`
                   : "Free Shipping"}
               </p>
 

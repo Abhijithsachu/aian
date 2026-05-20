@@ -12,6 +12,9 @@ function Collections() {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedProduct, setSelectedProduct] = useState(null);
 
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
   const navigate = useNavigate();
 
   // const BASE_URL = "http://localhost:8000";
@@ -57,6 +60,9 @@ function Collections() {
 
     const loadProducts = async () => {
       try {
+        setLoading(true);
+        setError(false);
+
         const res = await api.get("/products");
 
         const productData = Array.isArray(res.data)
@@ -70,7 +76,12 @@ function Collections() {
         console.log("PRODUCT FETCH ERROR:", err.response?.data || err.message);
 
         if (!cancelled) {
+          setError(true);
           toast.error("Failed to load products");
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
         }
       }
     };
@@ -298,7 +309,25 @@ Total: ₹${productTotal.toLocaleString()}
 
       {/* PRODUCT GRID */}
       <div className="collections-grid">
-        {filteredProducts.length > 0 ? (
+        {loading &&
+          Array.from({ length: 8 }).map((_, index) => (
+            <div className="collections-card collection-skeleton-card" key={index}>
+              <div className="image-box collection-skeleton-img"></div>
+
+              <div className="product-info">
+                <div className="collection-skeleton-line collection-skeleton-category"></div>
+                <div className="collection-skeleton-line collection-skeleton-title"></div>
+                <div className="collection-skeleton-line collection-skeleton-price"></div>
+                <div className="collection-skeleton-button"></div>
+              </div>
+            </div>
+          ))}
+
+        {!loading && error && (
+          <p className="no-results">Failed to load products</p>
+        )}
+
+        {!loading && !error && filteredProducts.length > 0 ? (
           filteredProducts.map((product) => (
             <div
               key={product._id}
@@ -335,9 +364,12 @@ Total: ₹${productTotal.toLocaleString()}
             </div>
           ))
         ) : (
-          <p className="no-results">
-            No products found matching "{searchTerm}"
-          </p>
+          !loading &&
+          !error && (
+            <p className="no-results">
+              No products found matching "{searchTerm}"
+            </p>
+          )
         )}
       </div>
 
